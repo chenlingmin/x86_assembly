@@ -1,0 +1,52 @@
+     1 00000000 E91F00                      jmp near start
+     2                                  
+     3                                  
+     4 00000003 4C076107620765076C-         mytext db 'L',0x07,'a',0x07,'b',0x07,'e',0x07,'l',0x07,' ',0x07,'o',0x07,            'f',0x07,'f',0x07,'s',0x07,'e',0x07,'t',0x07,':',0x07
+     4 0000000C 0720076F0766076607-
+     4 00000015 7307650774073A07   
+     6 0000001D 0000000000                  number db 0,0,0,0,0
+     7                                  
+     8                                  start:
+     9 00000022 B8C007                      mov ax, 0x07c0              ;设置数据段基地址
+    10 00000025 8ED8                        mov ds, ax
+    11                                  
+    12 00000027 B800B8                      mov ax, 0xb800              ;设置附加段基地址
+    13 0000002A 8EC0                        mov es, ax
+    14                                  
+    15 0000002C FC                          cld                         ;方向清零 DF 设置为0, std 指令设置 DF 为 1
+    16 0000002D BE[0300]                    mov si, mytext
+    17 00000030 BF0000                      mov di, 0
+    18 00000033 B90D00                      mov cx, (number-mytext)/2
+    19 00000036 F3A5                        rep movsw
+    20                                  
+    21                                      ;得到标号所代表的偏移地址
+    22 00000038 B8[1D00]                    mov ax, number
+    23                                  
+    24 0000003B 89C3                        mov bx, ax
+    25 0000003D B90500                      mov cx, 5                   ;循环次数
+    26 00000040 BE0A00                      mov si, 10                  ;除数
+    27                                  digit:
+    28 00000043 31D2                        xor dx, dx
+    29 00000045 F7F6                        div si
+    30 00000047 8817                        mov [bx], dl
+    31 00000049 43                          inc bx
+    32 0000004A E2F7                        loop digit
+    33                                  
+    34 0000004C BB[1D00]                    mov bx, number
+    35 0000004F BE0400                      mov si, 4
+    36                                  show:
+    37 00000052 8A00                        mov al, [bx+si]
+    38 00000054 0430                        add al, 0x30                ;ASCII
+    39 00000056 B404                        mov ah, 0x04                ;黑底红字
+    40 00000058 268905                      mov [es:di], ax
+    41 0000005B 83C702                      add di, 2
+    42 0000005E 4E                          dec si
+    43 0000005F 79F1                        jns show                    ;检查 SF 上次计算的符号位，为0时跳转 show
+    44                                  
+    45 00000061 26C7054407                  mov word [es:di], 0x0744
+    46                                  
+    47 00000066 E9FDFF                      jmp near $
+    48                                  
+    49 00000069 00<rep 195h>            times 510-($-$$)    db 0
+    50 000001FE 55AA                                        db 0x55, 0xaa
+    51                                  

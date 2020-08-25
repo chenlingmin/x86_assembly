@@ -1,0 +1,62 @@
+     1 00000000 E90E00                  jmp near start
+     2                                  
+     3 00000003 312B322B332B2E2E2E-     message db '1+2+3+...+100='
+     3 0000000C 2B3130303D         
+     4                                  
+     5                                  start:
+     6 00000011 B8C007                          mov ax, 0x07c0
+     7 00000014 8ED8                            mov ds, ax
+     8                                  
+     9 00000016 B800B8                          mov ax, 0xb800
+    10 00000019 8EC0                            mov es, ax
+    11                                  
+    12 0000001B BE[0300]                        mov si, message
+    13 0000001E BF0000                          mov di, 0
+    14 00000021 B90E00                          mov cx, start-message
+    15                                      @g:
+    16 00000024 8A04                            mov al, [si]
+    17 00000026 268805                          mov [es:di], al
+    18 00000029 47                              inc di
+    19 0000002A 26C60507                        mov byte [es:di], 0x07
+    20 0000002E 47                              inc di
+    21 0000002F 46                              inc si
+    22 00000030 E2F2                            loop @g
+    23                                  
+    24                                          ;以下计算1到100的和
+    25 00000032 31C0                            xor ax, ax
+    26 00000034 B90100                          mov cx, 1
+    27                                      @f:
+    28 00000037 01C8                            add ax, cx
+    29 00000039 41                              inc cx
+    30 0000003A 83F964                          cmp cx, 100
+    31 0000003D 7EF8                            jle @f
+    32                                  
+    33                                          ;以下计算累加和的每个数位
+    34 0000003F 31C9                            xor cx, cx              ;设置堆栈段的段基地址
+    35 00000041 8ED1                            mov ss, cx
+    36 00000043 89CC                            mov sp, cx
+    37                                  
+    38 00000045 BB0A00                          mov bx, 10
+    39 00000048 31C9                            xor cx, cx
+    40                                      @d:
+    41 0000004A 41                              inc cx
+    42 0000004B 31D2                            xor dx, dx
+    43 0000004D F7F3                            div bx
+    44 0000004F 80CA30                          or  dl, 0x30
+    45 00000052 52                              push dx
+    46 00000053 83F800                          cmp ax, 0
+    47 00000056 75F2                            jne @d
+    48                                  
+    49                                          ;以下显示各个数位
+    50                                      @a:
+    51 00000058 5A                              pop dx
+    52 00000059 268815                          mov [es:di], dl
+    53 0000005C 47                              inc di
+    54 0000005D 26C60507                        mov byte [es:di], 0x07
+    55 00000061 47                              inc di
+    56 00000062 E2F4                            loop @a
+    57                                  
+    58 00000064 E9FDFF                  jmp near $
+    59                                  
+    60 00000067 00<rep 197h>            times 510-($-$$)    db 0
+    61 000001FE 55AA                                        db 0x55, 0xaa

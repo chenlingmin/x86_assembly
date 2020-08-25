@@ -1,0 +1,97 @@
+     1 00000000 B800B8                      mov ax, 0xb800  ; 文本模式缓冲区
+     2 00000003 8EC0                        mov es, ax
+     3                                  
+     4                                      ; 显示"Label offset:"
+     5 00000005 26C60600004C                mov byte [es:0x00],'L'
+     6 0000000B 26C606010007                mov byte [es:0x01],0x07
+     7 00000011 26C606020061                mov byte [es:0x02],'a'
+     8 00000017 26C606030007                mov byte [es:0x03],0x07
+     9 0000001D 26C606040062                mov byte [es:0x04],'b'
+    10 00000023 26C606050007                mov byte [es:0x05],0x07
+    11 00000029 26C606060065                mov byte [es:0x06],'e'
+    12 0000002F 26C606070007                mov byte [es:0x07],0x07
+    13 00000035 26C60608006C                mov byte [es:0x08],'l'
+    14 0000003B 26C606090007                mov byte [es:0x09],0x07
+    15 00000041 26C6060A0020                mov byte [es:0x0a],' '
+    16 00000047 26C6060B0007                mov byte [es:0x0b],0x07
+    17 0000004D 26C6060C006F                mov byte [es:0x0c],"o"
+    18 00000053 26C6060D0007                mov byte [es:0x0d],0x07
+    19 00000059 26C6060E0066                mov byte [es:0x0e],'f'
+    20 0000005F 26C6060F0007                mov byte [es:0x0f],0x07
+    21 00000065 26C606100066                mov byte [es:0x10],'f'
+    22 0000006B 26C606110007                mov byte [es:0x11],0x07
+    23 00000071 26C606120073                mov byte [es:0x12],'s'
+    24 00000077 26C606130007                mov byte [es:0x13],0x07
+    25 0000007D 26C606140065                mov byte [es:0x14],'e'
+    26 00000083 26C606150007                mov byte [es:0x15],0x07
+    27 00000089 26C606160074                mov byte [es:0x16],'t'
+    28 0000008F 26C606170007                mov byte [es:0x17],0x07
+    29 00000095 26C60618003A                mov byte [es:0x18],':'
+    30 0000009B 26C606190007                mov byte [es:0x19],0x07
+    31                                  
+    32 000000A1 B8[2E01]                    mov ax, number              ;取得标号 number 的偏移地址
+    33 000000A4 BB0A00                      mov bx, 10
+    34                                  
+    35                                      ; 设置数据段基地址
+    36 000000A7 8CC9                        mov cx, cs
+    37 000000A9 8ED9                        mov ds, cx
+    38                                  
+    39                                      ;求个位数
+    40 000000AB BA0000                      mov dx, 0
+    41 000000AE F7F3                        div bx
+    42 000000B0 8816[2E7D]                  mov [0x7c00+number+0x00], dl    ;保存个位数的数字
+    43                                  
+    44                                      ;十位数
+    45 000000B4 31D2                        xor dx, dx
+    46 000000B6 F7F3                        div bx
+    47 000000B8 8816[2F7D]                  mov [0x7c00+number+0x01], dl    ;保存十位数的数字
+    48                                  
+    49                                      ;百位数
+    50 000000BC 31D2                        xor dx, dx
+    51 000000BE F7F3                        div bx
+    52 000000C0 8816[307D]                  mov [0x7c00+number+0x02], dl;   ;保存百位数的数字
+    53                                  
+    54                                      ;求千位上的数字
+    55 000000C4 31D2                        xor dx, dx
+    56 000000C6 F7F3                        div bx
+    57 000000C8 8816[317D]                  mov [0x7c00+number+0x03], dl   ;保存千位上的数字
+    58                                  
+    59                                      ;求万位上的数字
+    60 000000CC 31D2                        xor dx, dx
+    61 000000CE F7F3                        div bx
+    62 000000D0 8816[327D]                  mov [0x7c00+number+0x04], dl   ;保存万位上的数字
+    63                                  
+    64                                      ;以下用十进制显示标号的偏移地址
+    65 000000D4 A0[327D]                    mov al, [0x7c00+number+0x04]
+    66 000000D7 0430                        add al, 0x30
+    67 000000D9 26A21A00                    mov [es: 0x1a], al
+    68 000000DD 26C6061B0004                mov byte [es: 0x1b], 0x04
+    69                                  
+    70 000000E3 A0[317D]                    mov al,[0x7c00+number+0x03]
+    71 000000E6 0430                        add al,0x30
+    72 000000E8 26A21C00                    mov [es:0x1c],al
+    73 000000EC 26C6061D0004                mov byte [es:0x1d],0x04
+    74                                  
+    75 000000F2 A0[307D]                    mov al,[0x7c00+number+0x02]
+    76 000000F5 0430                        add al,0x30
+    77 000000F7 26A21E00                    mov [es:0x1e],al
+    78 000000FB 26C6061F0004                mov byte [es:0x1f],0x04
+    79                                  
+    80 00000101 A0[2F7D]                    mov al,[0x7c00+number+0x01]
+    81 00000104 0430                        add al,0x30
+    82 00000106 26A22000                    mov [es:0x20],al
+    83 0000010A 26C606210004                mov byte [es:0x21],0x04
+    84                                  
+    85 00000110 A0[2E7D]                    mov al,[0x7c00+number+0x00]
+    86 00000113 0430                        add al,0x30
+    87 00000115 26A28200                    mov [es:0x82],al
+    88 00000119 26C606830004                mov byte [es:0x83],0x04
+    89                                  
+    90 0000011F 26C606240044                mov byte [es:0x24],'D'
+    91 00000125 26C606250007                mov byte [es:0x25],0x07
+    92                                  
+    93 0000012B E9FDFF                      infi: jmp near infi
+    94 0000012E 0000000000                  number db 0,0,0,0,0
+    95                                  
+    96 00000133 00<rep CBh>                 times 203 db 0
+    97 000001FE 55AA                                    db 0x55, 0xaa

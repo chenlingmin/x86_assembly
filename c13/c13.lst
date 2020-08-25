@@ -1,0 +1,85 @@
+     1                                  ;===============================================================================
+     2                                  SECTION header vstart=0
+     3 00000000 [00000000]                      program_length      dd program_end              ;程序的总长度#0x00
+     4                                  
+     5 00000004 [28030000]                      head_len            dd header_end               ;程序头部的长度#0x04
+     6                                  
+     7 00000008 00000000                        stack_seg           dd 0                        ;用于接收堆栈段选择子#0x08
+     8 0000000C 01000000                        stack_len           dd 1                        ;程序建议的堆栈大小#0x0c
+     9                                                                                          ;以4KB为单位
+    10                                  
+    11 00000010 [00000000]                      prgentry            dd start                    ;程序入口#0x10
+    12 00000014 [00000000]                      code_seg            dd section.code.start       ;代码段位置#0x14
+    13 00000018 [53000000]                      code_len            dd code_end                 ;代码段长度#0x18
+    14                                  
+    15 0000001C [00000000]                      data_seg            dd section.data.start       ;数据段位置#0x1c
+    16 00000020 [40040000]                      data_len            dd data_end                 ;数据段位置#0x20
+    17                                  
+    18                                  ;-------------------------------------------------------------------------------
+    19                                          ;符号地址检索表
+    20 00000024 03000000                        salt_items          dd (header_end-salt)/256    ;#0x24
+    21                                          salt:                                           ;#0x28
+    22 00000028 405072696E74537472-             PrintString         db  '@PrintString'
+    22 00000031 696E67             
+    23 00000034 00<rep F4h>                                         times 256-($-PrintString) db 0
+    24                                  
+    25 00000128 405465726D696E6174-             TerminateProgram    db  '@TerminateProgram'
+    25 00000131 6550726F6772616D   
+    26 00000139 00<rep EFh>                                         times 256-($-TerminateProgram) db 0
+    27                                  
+    28 00000228 40526561644469736B-             ReadDiskData        db  '@ReadDiskData'
+    28 00000231 44617461           
+    29 00000235 00<rep F3h>                                         times 256-($-ReadDiskData) db 0
+    30                                  
+    31                                  header_end:
+    32                                  ;===============================================================================
+    33                                  SECTION data vstart=0
+    34                                  
+    35 00000000 00<rep 400h>                    buffer times 1024   db 0                          ;缓冲区
+    36                                  
+    37 00000400 0D0A0D0A                        message_1           db  0x0d,0x0a,0x0d,0x0a
+    38 00000404 2A2A2A2A2A2A2A2A2A-                                 db  '**********User program is runing**********'
+    38 0000040D 2A557365722070726F-
+    38 00000416 6772616D2069732072-
+    38 0000041F 756E696E672A2A2A2A-
+    38 00000428 2A2A2A2A2A2A       
+    39 0000042E 0D0A00                                              db  0x0d,0x0a,0
+    40 00000431 20204469736B206461-             message_2           db  '  Disk data:',0x0d,0x0a,0
+    40 0000043A 74613A0D0A00       
+    41                                  
+    42                                  data_end:
+    43                                  ;===============================================================================
+    44                                          [bits 32]
+    45                                  ;===============================================================================
+    46                                  SECTION code vstart=0
+    47                                  start:
+    48 00000000 8CD8                            mov eax, ds
+    49 00000002 8EE0                            mov fs, eax
+    50                                  
+    51 00000004 A1[08000000]                    mov eax, [stack_seg]
+    52 00000009 8ED0                            mov ss, eax
+    53 0000000B BC00000000                      mov esp, 0
+    54                                  
+    55 00000010 A1[1C000000]                    mov eax, [data_seg]
+    56 00000015 8ED8                            mov ds, eax
+    57                                  
+    58 00000017 BB[00040000]                    mov ebx, message_1
+    59 0000001C 64FF1D[28000000]                call far [fs:PrintString]
+    60                                  
+    61 00000023 B864000000                      mov eax, 100                                        ;逻辑扇区号100
+    62 00000028 BB[00000000]                    mov ebx, buffer                                     ;缓冲区偏移地址
+    63 0000002D 64FF1D[28020000]                call far [fs:ReadDiskData]                          ;段间调用
+    64                                  
+    65 00000034 BB[31040000]                    mov ebx, message_2
+    66 00000039 64FF1D[28000000]                call far [fs:PrintString]
+    67                                  
+    68 00000040 BB[00000000]                    mov ebx, buffer
+    69 00000045 64FF1D[28000000]                call far [fs:PrintString]                           ;too.
+    70                                  
+    71 0000004C 64FF2D[28010000]                jmp far [fs:TerminateProgram]                       ;将控制权返回到系统
+    72                                  
+    73                                  code_end:
+    74                                  ;===============================================================================
+    75                                  SECTION trail
+    76                                  ;-------------------------------------------------------------------------------
+    77                                  program_end:

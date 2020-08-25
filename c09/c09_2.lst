@@ -1,0 +1,78 @@
+     1                                  ;=================================================================================
+     2                                  SECTION header vstart=0                     ;定义用户程序头部段
+     3 00000000 [00000000]                  program_length  dd program_end          ;程序总长度[0x00]
+     4                                  
+     5                                      ;用户程序入口点
+     6 00000004 [0000]                      code_entry      dw start                ;偏移地址[0x04]
+     7 00000006 [00000000]                                  dd section.code.start   ;段地址[0x06]
+     8                                  
+     9 0000000A 0300                        realloc_tbl_len dw (header_end-realloc_begin)/4
+    10                                                                              ;段重定位表项个数[0x0a]
+    11                                  
+    12                                      realloc_begin:
+    13                                      ;段重定位表
+    14 0000000C [00000000]                  code_segment    dd section.code.start   ;[0x0c]
+    15 00000010 [00000000]                  data_segment    dd section.data.start   ;[0x10]
+    16 00000014 [00000000]                  stack_segment   dd section.stack.start  ;[0x14]
+    17                                  
+    18                                      header_end:
+    19                                  
+    20                                  ;=================================================================================
+    21                                  SECTION code align=16 vstart=6              ;定义代码段
+    22                                  start:
+    23 00000000 A1[1400]                        mov ax, [stack_segment]
+    24 00000003 8ED0                            mov ss, ax
+    25 00000005 BC[0001]                        mov sp, ss_pointer
+    26 00000008 A1[1000]                        mov ax, [data_segment]
+    27 0000000B 8ED8                            mov ds, ax
+    28                                  
+    29 0000000D B97700                          mov cx, msg_end-message
+    30 00000010 BB[0000]                        mov bx, message
+    31                                  
+    32                                      .putc:
+    33 00000013 B40E                            mov ah, 0x0e
+    34 00000015 8A07                            mov al, [bx]
+    35 00000017 CD10                            int 0x10
+    36 00000019 43                              inc bx
+    37 0000001A E2F7                            loop .putc
+    38                                  
+    39                                      .reps:
+    40 0000001C B400                            mov ah, 0x00
+    41 0000001E CD16                            int 0x16
+    42                                  
+    43 00000020 B40E                            mov ah, 0x0e
+    44 00000022 B307                            mov bl, 0x07
+    45 00000024 CD10                            int 0x10
+    46                                  
+    47 00000026 EBF4                            jmp .reps
+    48                                  
+    49                                  ;=================================================================================
+    50                                  SECTION data align=16 vstart=0
+    51                                  
+    52 00000000 48656C6C6F2C206672-         message     db 'Hello, friend!',0x0d,0x0a
+    52 00000009 69656E64210D0A     
+    53 00000010 546869732073696D70-                     db 'This simple procedure used to demonstrate '
+    53 00000019 6C652070726F636564-
+    53 00000022 757265207573656420-
+    53 0000002B 746F2064656D6F6E73-
+    53 00000034 747261746520       
+    54 0000003A 7468652042494F5320-                     db 'the BIOS interrupt.',0x0d,0x0a
+    54 00000043 696E74657272757074-
+    54 0000004C 2E0D0A             
+    55 0000004F 506C65617365207072-                     db 'Please press the keys on the keyboard ->'
+    55 00000058 65737320746865206B-
+    55 00000061 657973206F6E207468-
+    55 0000006A 65206B6579626F6172-
+    55 00000073 64202D3E           
+    56                                      msg_end:
+    57                                  
+    58                                  ;=================================================================================
+    59                                  SECTION stack align=16 vstart=0
+    60 00000000 <res 100h>                      resb 256
+    60          ******************       warning: uninitialized space declared in stack section: zeroing [-w+zeroing]
+    61                                  ss_pointer:
+    62                                  
+    63                                  
+    64                                  ;=================================================================================
+    65                                  SECTION program_trail
+    66                                  program_end:
