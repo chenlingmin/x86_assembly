@@ -421,7 +421,7 @@ fill_descriptor_in_ldt:                         ;在LDT内安装一个新的描�
         push ds
 
         mov ecx, mem_0_4_gb_seg_sel
-        mov es, ecx
+        mov ds, ecx
 
         mov edi, [ebx+0x0c]                     ;获取LDT基地址
 
@@ -732,7 +732,7 @@ load_relocate_program:                          ;加载并重定位用户程序
 append_to_tcb_link:                             ;在TCB链上追加任务控制块
                                                 ;输入：ECX=TCB线性基地址
         push eax
-        push ebx
+        push edx
         push ds
         push es
 
@@ -763,7 +763,7 @@ append_to_tcb_link:                             ;在TCB链上追加任务控制�
 
         pop es
         pop ds
-        pop ebx
+        pop edx
         pop eax
 
         ret
