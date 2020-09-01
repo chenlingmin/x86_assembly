@@ -564,6 +564,7 @@ load_relocate_program:                          ;加载并重定位用户程序
         add eax, ecx                            ;得到堆栈的高端物理地址
         mov ecx, 0x00c0f600                     ;4KB粒度的堆栈段描述符,特权级3
         call sys_routine_seg_sel:make_seg_descriptor
+        mov ebx, esi                            ;TCB的基地址
         call fill_descriptor_in_ldt
         or cx, 0000_0000_0000_0011B             ;设置选择子的特权级为3
         mov [edi+0x08], cx                      ;登记堆栈段选择子到头部
@@ -851,7 +852,7 @@ start:
         mov ds, eax                             ;切换到用户程序头部段
 
         ;一下假装是从调用门返回，模仿处理器压入返回参数
-        push dword [0x88]                       ;调用前的堆栈段选择子
+        push dword [0x08]                       ;调用前的堆栈段选择子
         push dword 0                            ;调用前的ESP
 
         push dword [0x14]                       ;调用前的代码段选择子
