@@ -858,6 +858,10 @@ start:
         mov ecx, core_data_seg_sel              ;使ds指向核心数据段
         mov ds, ecx
 
+
+        mov ecx, mem_0_4_gb_seg_sel             ;令ES指向4GB数据段
+        mov es, ecx
+
         mov ebx, message_1
         call sys_routine_seg_sel:put_string
 
@@ -930,7 +934,7 @@ start:
         mov ecx, 0x00408900                     ;TSS描述符，特权级0
         call sys_routine_seg_sel:make_seg_descriptor
         call sys_routine_seg_sel:set_up_gdt_descriptor
-        mov [prgman_tss+0x04]                   ;保存程序管理器的TSS描述符选择子
+        mov [prgman_tss+0x04], cx               ;保存程序管理器的TSS描述符选择子
 
         ;任务寄存器TR中的内容是任务存在的标志，该内容也决定了当前任务是谁
         ;下面的指令为当前正在执行的0特权任务『程序管理器』后补手续（TSS）
