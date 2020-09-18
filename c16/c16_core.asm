@@ -225,38 +225,6 @@ put_hex_dword:                                  ;在当前光标处以十六进�
          retf
 
 ;-------------------------------------------------------------------------------
-allocate_memory:                                ;分配内存
-                                                ;输入：ECX=希望分配的字节数
-                                                ;输出：ECX=起始线性地址
-        push ds
-        push eax
-        push ebx
-
-        mov eax, core_data_seg_sel
-        mov ds, eax
-
-        mov eax, [ram_alloc]
-        add eax, ecx                            ;下一次分配时的起始地址
-
-        ;这里应当有检测可用内存数量的指令
-
-        mov ecx, [ram_alloc]                    ;返回分配的起始地址
-
-        mov ebx, eax
-        and ebx, 0xfffffffc
-        add ebx, 4                              ;强制对齐
-        test eax, 0x00000003                    ;下次分配的起始地址最好是4字节对齐
-        cmovnz eax, ebx                         ;如果没有对齐，则强制对齐
-        mov [ram_alloc], eax                    ;下次从该地址分配内存
-                                                ;cmovcc指令可以避免控制转移
-
-        pop ebx
-        pop eax
-        pop ds
-
-        retf
-
-;-------------------------------------------------------------------------------
 set_up_gdt_descriptor:                          ;在GDT内安装一个新的描述符
                                                 ;输入：EDX:EAX=描述符
                                                 ;输出：CX=描述符的选择子
@@ -378,7 +346,7 @@ allocate_a_4k_page:                             ;分配一个4KB的页
         pop ecx
         pop ebx
 
-        retf
+        ret
 
 ;-------------------------------------------------------------------------------
 alloc_inst_a_page:                              ;分配一个页，并安装在当前活动的层级分页
@@ -470,22 +438,17 @@ terminate_current_task:                         ;终止当前任务
                                                 ;注意，执行此例程时，当期任务仍在运行中
                                                 ;此例程其实也是当前任务的一部分
 
-        pushfd
-        mov edx, [esp]                          ;获取EFLAGS寄存器内容
-        add esp, 4
-
         mov eax, core_data_seg_sel
         mov ds, eax
 
+        pushfd
+        pop edx
+
         test dx, 0100_0000_0000_0000B           ;测试NT位
         jnz .b1                                 ;当前任务是嵌套的，到.b1执行iretd
-        mov ebx, core_msg1                      ;当前任务不是嵌套的，直到切换到
-        call sys_routine_seg_sel:put_string
-        jmp far [prgman_tss]                    ;程序管理器任务
+        jmp far [program_man_tss]               ;程序管理器任务
 
     .b1:
-        mov ebx, core_msg0
-        call sys_routine_seg_sel:put_string
         iretd
 
 sys_routine_end:
@@ -537,7 +500,8 @@ SECTION core_data vstart=0                      ;核心数据段
         message_1               db  '  Paging is enabled.System core is mapped to'
                                 db  ' address 0x80000000.',0x0d,0x0a,0
 
-        message_2               db  '  System wide CALL-GATE mounted.',0x0d,0x0a,0
+        message_2               db  0x0d,0x0a
+                                db  '  System wide CALL-GATE mounted.',0x0d,0x0a,0
 
         message_3               db  '********No more pages********',0
 
@@ -547,7 +511,7 @@ SECTION core_data vstart=0                      ;核心数据段
 
         bin_hex                 db '0123456789ABCDEF'
                                                 ;put_hex_dword子过程用的查找表
-        core_buf  times 2048    db 0            ;内核用的缓冲区
+        core_buf  times 512     db 0            ;内核用的缓冲区
 
         cpu_brnd0               db 0x0d, 0x0a, '  ', 0
         cpu_brand times 52      db 0
@@ -558,7 +522,7 @@ SECTION core_data vstart=0                      ;核心数据段
 
         ;内核信息
         core_next_laddr         dd 0x80100000   ;内核空间中下一个可分配的线性地址
-        prgman_man_tss          dd 0            ;程序管理器的TSS描述符选择子
+        program_man_tss         dd 0            ;程序管理器的TSS描述符选择子
                                 dw 0
 
 core_data_end:
@@ -657,7 +621,7 @@ load_relocate_program:                          ;加载并重定位用户程序
         mov esi, [ebp+11*4]                     ;从堆栈中取得TCB的基地址
     .b2:
         mov ebx, [es:esi+0x06]                  ;取得可用的线性地址
-        add dword, [es:esi+0x06], 0x1000
+        add dword [es:esi+0x06], 0x1000
         call sys_routine_seg_sel:alloc_inst_a_page
 
         push ecx
@@ -671,7 +635,7 @@ load_relocate_program:                          ;加载并重定位用户程序
         loop .b2
 
         ;在内核地址空间内创建用户任务的TSS
-        mov eax, core_date_seg_sel              ;切换DS到内核数据段
+        mov eax, core_data_seg_sel              ;切换DS到内核数据段
         mov ds, eax
 
         mov ebx, [core_next_laddr]              ;用户任务的TSS必须在全局空间上分配
@@ -789,7 +753,7 @@ load_relocate_program:                          ;加载并重定位用户程序
         cld
 
         mov ecx, [es:0x0c]                      ;U-SALT条目数（通过访问4GB段取得）
-        add edi, [es:0x08]                      ;U-SALT在4GB段内的偏移
+        mov edi, [es:0x08]                      ;U-SALT在4GB段内的偏移
     .b4:
         push ecx
         push edi
@@ -1058,7 +1022,7 @@ start:
         call far [salt_1+256]                   ;通过门显示信息（偏移量忽略）
 
         ;为程序管理器的TSS分配内存空间
-        mov ecx, [core_next_laddr]
+        mov ebx, [core_next_laddr]
         call sys_routine_seg_sel:alloc_inst_a_page
         add dword [core_next_laddr], 4096
 
