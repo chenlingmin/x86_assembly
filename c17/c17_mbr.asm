@@ -21,7 +21,7 @@ SECTION mbr vstart=0x00007c00
         mov dword [ebx+0x08], 0x0000ffff    ;基地址为0，界限为0xFFFFF,DPL=00
         mov dword [ebx+0x0c], 0x00cf9800    ;4KB粒度，代码段描述符，向上扩展
 
-        ;创建1#描述符，保护模式下的数据段和堆栈段描述符
+        ;创建2#描述符，保护模式下的数据段和堆栈段描述符
         mov dword [ebx+0x10], 0x0000ffff    ;基地址为0，界限为0xFFFFF,DPL=00
         mov dword [ebx+0x14], 0x00cf9200    ;4KB粒度，数据段描述符，向上扩展
 
