@@ -221,8 +221,8 @@ rtm_0x70_interrupt_handle:                      ;实时时钟中断处理过程
         jnz .b4
 
         ;将空闲任务和当前任务的状态都取反
-        not word [eax+0x04]                     ;设置空闲任务的状态未忙
-        not word [ebx+0x04]                     ;设置当前任务（忙）的状态未空闲
+        not word [eax+0x04]                     ;设置空闲任务的状态为忙
+        not word [ebx+0x04]                     ;设置当前任务（忙）的状态为空闲
         jmp far [eax+0x14]                      ;任务切换
 
     .irtn:
