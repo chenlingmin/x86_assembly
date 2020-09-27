@@ -1014,7 +1014,7 @@ start:
         mov eax, ebx                            ;TSS的起始线性地址
         mov ebx, 103                            ;段长度（界限）
         mov ecx, 0x00408900                     ;TSS描述符，特权级0
-        call flat_4gb_code_seg_sel:make_gate_descriptor
+        call flat_4gb_code_seg_sel:make_seg_descriptor
         call flat_4gb_code_seg_sel:set_up_gdt_descriptor
         mov [core_tcb+0x18], cx                 ;登记内核任务的TSS选择子到其TCB
 
