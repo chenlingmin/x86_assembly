@@ -634,7 +634,7 @@ load_relocate_program:                          ;加载并重定位用户程序
         mov ecx, eax
         shr ecx, 12                             ;程序占用的总4KB页数
 
-        mov eax, [ebx+40]                       ;起始扇区号
+        mov eax, [ebp+40]                       ;起始扇区号
         mov esi, [ebp+36]                       ;从堆栈中取得TCB的基地址
     .b2:
         alloc_user_linear                       ;宏：在用户任务地址空间上分配内存
